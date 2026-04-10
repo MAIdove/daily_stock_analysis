@@ -22,6 +22,9 @@ from src.utils.stock_classifier import (
 )
 
 
+# 导入内部函数进行测试
+from src.utils.stock_classifier import _is_us_stock_code
+
 class TestStockClassifier(unittest.TestCase):
     """测试股票分类模块"""
 
@@ -57,8 +60,27 @@ class TestStockClassifier(unittest.TestCase):
     def test_classify_stock(self):
         """测试股票分类"""
         result = classify_symbol('AAPL')
-        self.assertEqual(result[0], 'stock_or_etf')
-        self.assertIn('股票/ETF', result[1])
+        self.assertEqual(result[0], 'stock_us')
+        self.assertIn('美股', result[1])
+
+    def test_classify_us_stock(self):
+        """测试美股分类"""
+        for stock in ['SPY', 'QQQ', 'AAPL', 'VTI', 'VGT', 'XLK']:
+            result = classify_symbol(stock)
+            self.assertEqual(result[0], 'stock_us', f"{stock} should be classified as 美股")
+            self.assertIn('美股', result[1])
+
+    def test_is_us_stock_code(self):
+        """测试美股代码识别"""
+        # 正确的美股代码
+        us_codes = ['SPY', 'AAPL', 'MSFT', 'QQQ', 'VTI', 'BRK.B', 'BRK.A', 'F']
+        for code in us_codes:
+            self.assertTrue(_is_us_stock_code(code), f"{code} should be recognized as US stock code")
+        
+        # 不是美股代码
+        non_us_codes = ['600519', '000001', 'SPX', 'IXIC', 'DJI', '']
+        for code in non_us_codes:
+            self.assertFalse(_is_us_stock_code(code), f"{code} should NOT be recognized as US stock code")
 
     def test_separate_mixed_list(self):
         """测试分离混合列表"""
@@ -89,10 +111,20 @@ class TestStockClassifier(unittest.TestCase):
         symbols = ['SPY', 'SPX', 'QQQ', 'IXIC', 'AAPL']
         result = get_tushare_compatible_symbols(symbols)
         
-        self.assertEqual(set(result), {'SPY', 'QQQ', 'AAPL'})
+        self.assertEqual(set(result), set())
         self.assertNotIn('SPX', result)
         self.assertNotIn('IXIC', result)
 
+    def test_tushare_excludes_us_stocks(self):
+        """测试 Tushare 排除所有美股（包括个股和 ETF）"""
+        # 美股个股和 ETF 不应该在 Tushare 兼容列表中
+        symbols = ['SPY', 'QQQ', 'AAPL', 'MSFT', 'VTI', 'VGT', 'XLK', '600519', '510050']
+        result = get_tushare_compatible_symbols(symbols)
+        
+        # 仅 A股应该在列表中
+        self.assertEqual(set(result), {'600519', '510050'})
+        for us_stock in ['SPY', 'QQQ', 'AAPL', 'MSFT', 'VTI', 'VGT', 'XLK']:
+            self.assertNotIn(us_stock, result, f"{us_stock} should NOT be in Tushare compatible list")
     def test_get_index_only(self):
         """测试获取纯指数符号"""
         symbols = ['SPY', 'SPX', 'QQQ', 'IXIC', 'AAPL', '000001', '399001']
@@ -113,12 +145,12 @@ class TestStockClassifier(unittest.TestCase):
     def test_whitespace_handling(self):
         """测试空格处理"""
         result = classify_symbol('  AAPL  ')
-        self.assertEqual(result[0], 'stock_or_etf')
+        self.assertEqual(result[0], 'stock_us')
 
     def test_empty_symbol(self):
         """测试空符号"""
         result = classify_symbol('')
-        self.assertEqual(result[0], 'stock_or_etf')
+        self.assertEqual(result[0], 'stock_cn_or_hk')
 
     def test_mixed_market_separation(self):
         """测试混合市场分离"""

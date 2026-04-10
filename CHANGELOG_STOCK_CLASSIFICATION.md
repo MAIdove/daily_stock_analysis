@@ -2,7 +2,7 @@
 
 ## 问题背景
 
-**Issue**: Tushare Pro API 只支持股票/ETF，不支持纯指数代码
+**Issue**: Tushare Pro API 仅支持 A股股票/ETF，不支持美股（个股/ETF）及指数代码
 
 当用户在 `STOCK_LIST` 中混合配置股票（如 SPY, QQQ）和指数（如 SPX, IXIC, DJI）时，系统会试图从 Tushare 获取指数数据，导致以下错误：
 
@@ -29,7 +29,7 @@
 3. **文档和测试**
    - `docs/STOCK_CLASSIFICATION_GUIDE.md` - 完整使用指南
    - `STOCK_CLASSIFICATION_QUICK_REF.md` - 快速参考
-   - `tests/test_stock_classifier.py` - 15 个单元测试（全部通过）
+   - `tests/test_stock_classifier.py` - 18 个单元测试（全部通过）
 
 ### 支持的指数代码
 
@@ -65,8 +65,8 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```
 📊 股票/指数分类结果:
    总数: 8
-   股票/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance / Tushare
-   指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
+   美股个股/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance 仅
+   美股指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
 ✅ 混合配置，已自动分离
 ```
 
@@ -86,7 +86,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 | `test_case_insensitive` | ✅ | 大小写不敏感 |
 | `test_mixed_market_separation` | ✅ | 混合市场分离 |
 
-**运行结果**: 15/15 通过 ✅
+**运行结果**: 18/18 通过 ✅
 
 ## 实现细节
 
@@ -101,15 +101,17 @@ classify_symbol() → 逐个检查
     ├→ 在 US_INDEX_SYMBOLS?  → index_us
     ├→ 在 HK_INDEX_SYMBOLS?  → index_hk
     ├→ 在 CN_INDEX_SYMBOLS?  → index_cn
-    └→ 其他                  → stock_or_etf
+   ├→ 是美股代码?           → stock_us
+   └→ 其他                  → stock_cn_or_hk
     ↓
 separate_stocks_and_indices()
     ├→ 股票/ETF: ['SPY', 'QQQ', ...]
     └→ 指数: ['SPX', 'IXIC', ...]
     ↓
 使用相应数据源
-    ├→ 股票/ETF → Tushare / YFinance
-    └→ 指数    → YFinance 仅
+   ├→ A股股票/ETF → Tushare / YFinance
+   ├→ 美股个股/ETF → YFinance 仅
+   └→ 指数        → YFinance（A股指数可用 AKShare）
 ```
 
 ### 代码集成
@@ -172,7 +174,7 @@ CN_INDEX_SYMBOLS.add('NEW_INDEX')
 
 ### 完整性检查
 - ✅ 所有文件编译通过
-- ✅ 15 个单元测试通过
+- ✅ 18 个单元测试通过
 - ✅ 向后兼容
 - ✅ 无外部依赖
 
@@ -218,7 +220,7 @@ STOCK_LIST=SPX,IXIC,DJI,000001,000300
 |------|------|
 | 问题解决 | ✅ Tushare 指数问题已解决 |
 | 用户体验 | ✅ 无需分离配置，自动处理 |
-| 测试覆盖 | ✅ 15 个单元测试全部通过 |
+| 测试覆盖 | ✅ 18 个单元测试全部通过 |
 | 文档完整性 | ✅ 3 份详细文档 |
 | 向后兼容 | ✅ 现有配置无需改动 |
 | 性能 | ✅ 零额外开销 |

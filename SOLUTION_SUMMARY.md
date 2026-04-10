@@ -6,7 +6,7 @@
 > "Tushare 支持美股股指吗？导致我卡了"
 
 **根本原因：**
-- Tushare Pro API **仅支持股票/ETF**，不支持纯指数代码（SPX, IXIC, DJI 等）
+- Tushare Pro API **仅支持 A股股票/ETF**，不支持美股（个股/ETF）及指数代码（SPX, IXIC, DJI 等）
 - 当用户在 `STOCK_LIST` 中混合配置股票和指数时，系统会试图从 Tushare 获取指数数据
 - 导致错误：`股票代码应为9位，请检查。格式示例：sh.600000。`
 
@@ -17,16 +17,16 @@
 
 ### 核心改进
 
-系统现在**自动识别并分离股票/ETF 和指数**，根据类型选择合适的数据源：
+系统现在**自动识别并分离 A股股票、美股个股/ETF 和指数**，根据类型选择合适的数据源：
 
 ```
 用户配置：STOCK_LIST=SPY,QQQ,VTI,SPX,IXIC,DJI
 
 系统自动分类：
-  ├─ 股票/ETF (5个): SPY, QQQ, VTI, VGT, XLK
-  │  └─ 数据源: Tushare / YFinance ✅
-  └─ 指数 (3个): SPX, IXIC, DJI
-     └─ 数据源: YFinance 仅 ✅
+   ├─ 美股个股/ETF (5个): SPY, QQQ, VTI, VGT, XLK
+   │  └─ 数据源: YFinance 仅 ✅
+   └─ 美股指数 (3个): SPX, IXIC, DJI
+       └─ 数据源: YFinance 仅 ✅
 ```
 
 ### 用户使用方式
@@ -47,8 +47,8 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```
 📊 股票/指数分类结果:
    总数: 8
-   股票/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance / Tushare
-   指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
+   美股个股/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance 仅
+   美股指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
 ✅ 混合配置，已自动分离
 ```
 
@@ -61,7 +61,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 | 文件 | 用途 | 代码量 |
 |------|------|--------|
 | `src/utils/stock_classifier.py` | 核心分类模块 | 180 行 |
-| `tests/test_stock_classifier.py` | 单元测试（15 个） | 280 行 |
+| `tests/test_stock_classifier.py` | 单元测试（18 个） | 280 行 |
 | `docs/STOCK_CLASSIFICATION_GUIDE.md` | 完整使用指南 | 250 行 |
 | `STOCK_CLASSIFICATION_QUICK_REF.md` | 快速参考 | 150 行 |
 | `CHANGELOG_STOCK_CLASSIFICATION.md` | 改进日志 | 350 行 |
@@ -77,7 +77,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 
 | 指标 | 状态 |
 |------|------|
-| 单元测试 | ✅ 15/15 通过 |
+| 单元测试 | ✅ 18/18 通过 |
 | 编译检查 | ✅ 通过 |
 | 向后兼容 | ✅ 现有配置无需改动 |
 | 外部依赖 | ✅ 零新增 |
@@ -91,7 +91,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```env
 STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```
-- 5 个 ETF（自动用 Tushare/YFinance）
+- 5 个美股 ETF（自动用 YFinance）
 - 3 个指数（自动用 YFinance）
 
 ### 示例 2：混合市场
@@ -149,7 +149,7 @@ symbols = ['SPY', 'SPX', 'QQQ', 'IXIC']
 stocks, indices = separate_stocks_and_indices(symbols)
 
 # 结果
-# stocks  = ['SPY', 'QQQ']           # 股票/ETF
+# stocks  = ['SPY', 'QQQ']           # 美股个股/ETF
 # indices = ['SPX', 'IXIC']          # 指数
 ```
 
@@ -221,7 +221,7 @@ stocks, indices = separate_stocks_and_indices(symbols)
 ## 📊 测试结果
 
 ```
-✅ 15 个单元测试全部通过
+✅ 18 个单元测试全部通过
 
 test_us_indices_recognized ................... OK
 test_hk_indices_recognized ................... OK
@@ -234,7 +234,7 @@ test_get_index_only .......................... OK
 test_mixed_market_separation ................. OK
 ... 更多测试 ...
 
-Ran 15 tests in 0.001s
+Ran 18 tests in 0.001s
 ```
 
 ---

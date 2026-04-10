@@ -21,7 +21,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 **现在的效果：**
 - ✅ 无需改动，直接运行
 - ✅ 系统自动分离：
-  - 股票/ETF (5个): SPY, QQQ, VTI, VGT, XLK → Tushare/YFinance
+  - 美股个股/ETF (5个): SPY, QQQ, VTI, VGT, XLK → YFinance 仅
   - 指数 (3个): SPX, IXIC, DJI → YFinance 仅
 - ✅ 每次运行输出分类摘要日志
 
@@ -39,8 +39,8 @@ python main.py --stocks SPY,QQQ,VTI,SPX,IXIC,DJI
 ```
 📊 股票/指数分类结果:
    总数: 6
-   股票/ETF: 3 个 → ['SPY', 'QQQ', 'VTI'] → 数据源: YFinance / Tushare
-   指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
+  美股个股/ETF: 3 个 → ['SPY', 'QQQ', 'VTI'] → 数据源: YFinance 仅
+  美股指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
 ✅ 混合配置，已自动分离
 ```
 
@@ -85,7 +85,7 @@ python main.py --stocks SPY,QQQ,VTI,SPX,IXIC,DJI
 **A:** YFinance。无需配置 API，系统自动使用。
 
 ### Q3: 还能用 Tushare Token 吗？
-**A:** ✅ 当然可以。用于股票/ETF 的增强数据（如筹码分布）。
+**A:** ✅ 当然可以。用于 A 股股票/ETF 的增强数据（如筹码分布）。
 
 ### Q4: 支持添加新指数吗？
 **A:** ✅ 支持。编辑 `src/utils/stock_classifier.py` 的索引集合即可。
@@ -115,7 +115,7 @@ python -m unittest tests.test_stock_classifier -v
 
 **预期输出：**
 ```
-Ran 15 tests in 0.001s
+Ran 18 tests in 0.001s
 OK
 ```
 

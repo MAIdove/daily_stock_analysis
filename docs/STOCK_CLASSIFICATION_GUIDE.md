@@ -2,7 +2,7 @@
 
 ## 问题背景
 
-**Tushare Pro API 只支持股票/ETF 数据，不支持纯指数数据。**
+**Tushare Pro API 仅支持 A 股股票/ETF，不支持美股（个股/ETF）和各类指数。**
 
 当你在 `STOCK_LIST` 中混合配置股票（如 SPY, QQQ）和指数（如 SPX, IXIC, DJI）时，系统会试图从 Tushare 获取指数数据，导致格式错误。
 
@@ -16,7 +16,8 @@
 
 | 类型 | 示例 | 数据源 | 说明 |
 |------|------|--------|------|
-| **股票/ETF** | SPY, QQQ, AAPL, 600519 | YFinance / Tushare | 可用多个数据源 |
+| **A股股票/ETF** | 600519, 510050 | YFinance / Tushare | 可用多个数据源 |
+| **美股个股/ETF** | SPY, QQQ, AAPL | YFinance 仅 | ⚠️ Tushare 不支持 |
 | **美股指数** | SPX, IXIC, DJI, VIX | YFinance 仅 | ⚠️ Tushare 不支持 |
 | **港股指数** | HSI, HSCEI | YFinance 仅 | ⚠️ Tushare 不支持 |
 | **A股指数** | 000001, 399001, 000300 | YFinance / AKShare | ⚠️ Tushare 不支持 |
@@ -34,16 +35,16 @@
 STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 
 # 系统自动识别：
-# - 股票/ETF：SPY, QQQ, VTI, VGT, XLK → Tushare/YFinance
-# - 指数：SPX, IXIC, DJI → YFinance 仅
+# - 美股个股/ETF：SPY, QQQ, VTI, VGT, XLK → YFinance 仅
+# - 美股指数：SPX, IXIC, DJI → YFinance 仅
 
 # 示例 2: 混合 A股 + 美股
 STOCK_LIST=600519,000001,000300,SPY,QQQ,SPX,IXIC
 
 # 系统自动识别：
-# - A股股票：600519 → Tushare/YFinance
+# - A股股票：600519 → YFinance/Tushare
 # - A股指数：000001, 000300 → YFinance/AKShare
-# - 美股 ETF：SPY, QQQ → Tushare/YFinance
+# - 美股 ETF：SPY, QQQ → YFinance 仅
 # - 美股指数：SPX, IXIC → YFinance 仅
 ```
 
@@ -52,8 +53,8 @@ STOCK_LIST=600519,000001,000300,SPY,QQQ,SPX,IXIC
 ```
 📊 股票/指数分类结果:
    总数: 8
-   股票/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance / Tushare
-   指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
+   美股个股/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance 仅
+   美股指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
 ✅ 混合配置，已自动分离
 ```
 
@@ -85,10 +86,10 @@ STOCK_LIST=600519,000001,000300,SPY,QQQ,SPX,IXIC
 
 Tushare Pro 文档明确说明：
 
-> **美股指数数据**：Tushare 仅提供 `us_adjfactor`（美股复权因子）和个股数据
+> **美股数据限制**：Tushare 不支持美股个股/ETF与指数（本项目中美股统一走 YFinance）
 > 
 > ❌ 不支持：SPX, IXIC, DJI 等纯指数代码
-> ✅ 支持：AAPL, SPY, MSFT 等个股和 ETF
+> ✅ 支持：A 股股票/ETF（如 600519, 510050）
 
 ### 查证链接
 - https://tushare.pro/document/2?doc_id=402 - 美股复权因子（仅个股）
@@ -127,11 +128,13 @@ stock_classifier.separate_stocks_and_indices()
     ├→ 检查是否在 US_INDEX_SYMBOLS
     ├→ 检查是否在 HK_INDEX_SYMBOLS
     ├→ 检查是否在 CN_INDEX_SYMBOLS
-    └→ 其他视为股票/ETF
+   ├→ 检查是否为美股个股/ETF
+   └→ 其他视为 A股/港股股票
     ↓
 分离结果 (stocks, indices)
-    ├→ 股票/ETF: 优先 Tushare，降级 YFinance
-    └→ 指数: YFinance 仅
+   ├→ A股股票/ETF: Tushare / YFinance
+   ├→ 美股个股/ETF: YFinance 仅
+   └→ 指数: YFinance（A股指数可用 AKShare）
 ```
 
 ### 核心代码

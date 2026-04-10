@@ -18,7 +18,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```
 
 系统会自动识别并处理：
-- ✅ **股票/ETF**（SPY, QQQ, VTI, VGT, XLK） → 数据源：Tushare / YFinance
+- ✅ **美股个股/ETF**（SPY, QQQ, VTI, VGT, XLK） → 数据源：YFinance 仅
 - ✅ **指数**（SPX, IXIC, DJI） → 数据源：YFinance 仅
 
 ---
@@ -58,7 +58,7 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 ```
 **分类结果：**
-- 股票/ETF: 5 个 (SPY, QQQ, VTI, VGT, XLK)
+- 美股个股/ETF: 5 个 (SPY, QQQ, VTI, VGT, XLK)
 - 指数: 3 个 (SPX, IXIC, DJI)
 
 ### 示例 2: 混合 A股股票 + 美股 ETF
@@ -66,7 +66,8 @@ STOCK_LIST=SPY,QQQ,VTI,VGT,XLK,SPX,IXIC,DJI
 STOCK_LIST=600519,000001,SPY,QQQ,SPX,IXIC
 ```
 **分类结果：**
-- 股票/ETF: 3 个 (600519, SPY, QQQ)
+- A股股票: 1 个 (600519)
+- 美股个股/ETF: 2 个 (SPY, QQQ)
 - 指数: 3 个 (000001, SPX, IXIC)
 
 ### 示例 3: 仅指数（用于市场复盘）
@@ -86,8 +87,8 @@ STOCK_LIST=SPX,IXIC,DJI,000001,000300
 ```
 📊 股票/指数分类结果:
    总数: 8
-   股票/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance / Tushare
-   指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
+   美股个股/ETF: 5 个 → ['SPY', 'QQQ', 'VTI', 'VGT', 'XLK'] → 数据源: YFinance 仅
+   美股指数: 3 个 → ['SPX', 'IXIC', 'DJI'] → 数据源: YFinance 仅
 ✅ 混合配置，已自动分离
 ```
 
@@ -99,7 +100,7 @@ STOCK_LIST=SPX,IXIC,DJI,000001,000300
 **A:** YFinance。无需配置，系统自动处理。
 
 ### Q: 为什么还要配置 Tushare Token？
-**A:** 用于股票/ETF 的增强数据（如筹码分布），指数不需要 Tushare。
+**A:** 用于 A 股股票/ETF 的增强数据（如筹码分布），美股与指数不走 Tushare。
 
 ### Q: 能否只分析指数？
 **A:** 可以，系统会跳过 Tushare 初始化，仅用 YFinance。
@@ -115,7 +116,8 @@ STOCK_LIST=SPX,IXIC,DJI,000001,000300
 1. **检查美股指数** - 在 `US_INDEX_SYMBOLS` 中？
 2. **检查港股指数** - 在 `HK_INDEX_SYMBOLS` 中？
 3. **检查A股指数** - 在 `CN_INDEX_SYMBOLS` 中？
-4. **其他** - 视为股票/ETF
+4. **检查是否美股代码** - 是则归类为美股个股/ETF（YFinance）
+5. **其他** - 视为 A股/港股股票
 
 ### 代码示例
 ```python
