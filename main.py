@@ -416,6 +416,7 @@ def run_full_analysis(
     # failures propagate to the caller instead of being silently swallowed.
     from src.core.market_review import run_market_review
     from src.core.pipeline import StockAnalysisPipeline
+    from src.utils.stock_classifier import log_classification_summary
 
     try:
         # Issue #529: Hot-reload STOCK_LIST from .env on each scheduled run
@@ -424,6 +425,9 @@ def run_full_analysis(
 
         # Issue #373: Trading day filter (per-stock, per-market)
         effective_codes = stock_codes if stock_codes is not None else config.stock_list
+        
+        # 【新增】自动分类股票和指数 - 避免 Tushare 不支持指数的问题
+        log_classification_summary(effective_codes)
         filtered_codes, effective_region, should_skip = _compute_trading_day_filter(
             config, args, effective_codes
         )

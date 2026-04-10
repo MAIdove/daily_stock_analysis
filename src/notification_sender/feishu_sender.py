@@ -211,6 +211,14 @@ class FeishuSender:
                 return False
 
         # 1) 优先使用交互卡片（支持 Markdown 渲染）
+        card_title = "股票智能分析报告"
+        if "大盘复盘" in prepared_content:
+            card_title = "市场复盘报告"
+        if "美股" in prepared_content and "大盘复盘" in prepared_content:
+            card_title = "美股市场复盘报告"
+        elif "A股" in prepared_content and "大盘复盘" in prepared_content:
+            card_title = "A股市场复盘报告"
+
         card_payload = {
             "msg_type": "interactive",
             "card": {
@@ -218,7 +226,7 @@ class FeishuSender:
                 "header": {
                     "title": {
                         "tag": "plain_text",
-                        "content": "A股智能分析报告"
+                        "content": card_title
                     }
                 },
                 "elements": [
