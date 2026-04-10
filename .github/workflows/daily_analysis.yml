@@ -405,3 +405,26 @@ jobs:
           else
             echo "📜 无日志文件"
           fi
+
+      - name: 提取关键诊断日志
+        if: always()
+        run: |
+          echo ""
+          echo "=========================================="
+          echo "🩺 关键诊断日志摘要"
+          echo "=========================================="
+          if ! compgen -G "logs/*.log" > /dev/null; then
+            echo "⚠️ 无日志文件，无法提取诊断信息"
+            exit 0
+          fi
+
+          echo "【失败/异常关键字】"
+          grep -HnE \
+            "分析流程执行失败|DataFetchError|所有数据源获取 .*失败|决策仪表盘推送失败|飞书返回错误|飞书请求失败|通知发送完成|未配置有效的通知渠道|今日所有相关市场均为非交易日|Traceback|ERROR" \
+            logs/*.log | tail -n 200 || echo "未命中失败关键字"
+
+          echo ""
+          echo "【AI 调用关键字】"
+          grep -HnE \
+            "LiteLLM-Success Call|LiteLLM-Async Success Call|模型调用成功|分析完成" \
+            logs/*.log | tail -n 100 || echo "未命中 AI 调用关键字"
