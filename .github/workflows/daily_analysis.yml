@@ -55,6 +55,95 @@ jobs:
       - name: 创建必要目录
         run: |
           mkdir -p data logs reports
+
+      - name: 通知健康检查（飞书）
+        env:
+          FEISHU_WEBHOOK_URL: ${{ vars.FEISHU_WEBHOOK_URL || secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_WEBHOOK_SECRET: ${{ vars.FEISHU_WEBHOOK_SECRET || secrets.FEISHU_WEBHOOK_SECRET }}
+          FEISHU_WEBHOOK_KEYWORD: ${{ vars.FEISHU_WEBHOOK_KEYWORD || secrets.FEISHU_WEBHOOK_KEYWORD }}
+        run: |
+          python - <<'PY'
+          import os
+          import json
+          import time
+          import hmac
+          import base64
+          import hashlib
+          import urllib.request
+          import urllib.error
+
+          def fail(message: str) -> None:
+            print(f"::error::{message}")
+            raise SystemExit(1)
+
+          webhook_url = (os.getenv("FEISHU_WEBHOOK_URL") or "").strip()
+          webhook_secret = (os.getenv("FEISHU_WEBHOOK_SECRET") or "").strip()
+          webhook_keyword = (os.getenv("FEISHU_WEBHOOK_KEYWORD") or "").strip()
+
+          if not webhook_url:
+            print("::warning::未配置 FEISHU_WEBHOOK_URL，跳过飞书通知健康检查")
+            raise SystemExit(0)
+
+          run_id = os.getenv("GITHUB_RUN_ID", "unknown")
+          run_number = os.getenv("GITHUB_RUN_NUMBER", "unknown")
+          now = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+          text = (
+            f"✅ GitHub Actions 飞书通知健康检查\n"
+            f"Run #{run_number} (ID: {run_id})\n"
+            f"Time: {now}"
+          )
+          if webhook_keyword:
+            text = f"{webhook_keyword}\n{text}"
+
+          payload = {
+            "msg_type": "text",
+            "content": {"text": text},
+          }
+
+          if webhook_secret:
+            timestamp = str(int(time.time()))
+            string_to_sign = f"{timestamp}\n{webhook_secret}"
+            sign = base64.b64encode(
+              hmac.new(
+                string_to_sign.encode("utf-8"),
+                digestmod=hashlib.sha256,
+              ).digest()
+            ).decode("utf-8")
+            payload["timestamp"] = timestamp
+            payload["sign"] = sign
+
+          data = json.dumps(payload).encode("utf-8")
+          req = urllib.request.Request(
+            webhook_url,
+            data=data,
+            headers={"Content-Type": "application/json"},
+            method="POST",
+          )
+
+          try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+              status = resp.getcode()
+              body_raw = resp.read().decode("utf-8", errors="ignore")
+          except urllib.error.HTTPError as e:
+            body = e.read().decode("utf-8", errors="ignore")
+            fail(f"飞书健康检查失败: HTTP {e.code}, body={body}")
+          except Exception as e:
+            fail(f"飞书健康检查请求异常: {e}")
+
+          if status != 200:
+            fail(f"飞书健康检查失败: HTTP {status}, body={body_raw}")
+
+          try:
+            body_json = json.loads(body_raw or "{}")
+          except Exception:
+            fail(f"飞书健康检查失败: 响应非 JSON, body={body_raw}")
+
+          code = body_json.get("code")
+          if code != 0:
+            fail(f"飞书健康检查失败: code={code}, msg={body_json.get('msg')}, body={body_json}")
+
+          print("✅ 飞书通知健康检查通过")
+          PY
       
       - name: 执行股票分析
         env:
